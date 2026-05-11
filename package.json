@@ -1,0 +1,57 @@
+{
+  "name": "freeswap",
+  "version": "0.1.0",
+  "description": "🔄 Hot-swap free LLM models for your agents. Auto-detect, auto-route, auto-failover.",
+  "main": "dist/index.js",
+  "bin": {
+    "freeswap": "dist/cli/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/cli/index.js start",
+    "dev": "tsx src/cli/index.ts start",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "validate": "tsx scripts/validate-models.ts",
+    "update-registry": "tsx scripts/update-registry.ts",
+    "lint": "eslint src/",
+    "prepublishOnly": "npm run build && npm run test"
+  },
+  "keywords": [
+    "llm",
+    "free-llm",
+    "ai-gateway",
+    "model-router",
+    "openai-compatible",
+    "groq",
+    "gemini",
+    "ollama",
+    "agent"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/freeswap"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^12.0.0",
+    "dotenv": "^16.4.0",
+    "express": "^4.18.0",
+    "cors": "^2.8.5",
+    "js-yaml": "^4.1.0",
+    "openai": "^4.73.0",
+    "winston": "^3.14.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/cors": "^2.8.17",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.11.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
