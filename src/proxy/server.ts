@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import { FreeSwapConfig } from '../types';
 import { loadRegistry } from '../registry';
 import { ProviderFactory } from '../providers';
@@ -20,6 +21,10 @@ export async function createProxyServer(config: FreeSwapConfig) {
   const router = new FreeSwapRouter(registry, providers as any, config);
   const monitor = new HealthMonitor(providers as any, config, new Map());
   monitor.start();
+
+  app.get('/', (_req: any, res: any) => {
+    res.sendFile(path.join(__dirname, 'dashboard.html'));
+  });
 
   app.get('/v1/models', (_req: any, res: any) => {
     const models = registry.models.map((m: any) => ({

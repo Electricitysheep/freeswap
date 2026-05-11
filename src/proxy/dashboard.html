@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreeSwap Dashboard</title>
+<style>
+  :root {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-card: #21262d;
+    --bg-card-hover: #30363d;
+    --border: #30363d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --red: #f85149;
+    --gray: #8b949e;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+  .container { max-width: 1280px; margin: 0 auto; padding: 24px; }
+
+  /* Header */
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 24px; background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .header-logo { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+  .header-logo span { color: var(--accent); }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+    transition: background 0.3s;
+  }
+  .status-dot.online { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .status-dot.offline { background: var(--red); box-shadow: 0 0 8px var(--red); }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .header-right a { color: var(--accent); text-decoration: none; font-size: 14px; }
+  .header-right a:hover { text-decoration: underline; }
+
+  /* Stats bar */
+  .stats-bar {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px; text-align: center;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color: var(--accent); }
+  .stat-value { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+  .stat-label { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-card.providers .stat-value { color: var(--accent); }
+  .stat-card.models .stat-value { color: var(--green); }
+  .stat-card.uptime .stat-value { color: var(--yellow); }
+  .stat-card.rpm .stat-value { color: var(--accent); }
+
+  /* Provider cards grid */
+  .section-title {
+    font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .provider-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px; margin-bottom: 32px;
+  }
+  .provider-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px;
+    transition: all 0.2s; cursor: default;
+    position: relative; overflow: hidden;
+  }
+  .provider-card:hover {
+    border-color: var(--accent); transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .provider-card::before {
+    content: ''; position: absolute; top: 0; left: 0;
+    width: 4px; height: 100%; transition: background 0.3s;
+  }
+  .provider-card.status-healthy::before { background: var(--green); }
+  .provider-card.status-degraded::before { background: var(--yellow); }
+  .provider-card.status-down::before { background: var(--red); }
+  .provider-card.status-unknown::before { background: var(--gray); }
+
+  .provider-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  .provider-name { font-size: 16px; font-weight: 600; }
+  .provider-badge {
+    font-size: 11px; padding: 2px 8px; border-radius: 12px;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .badge-healthy { background: rgba(63,185,80,0.15); color: var(--green); }
+  .badge-degraded { background: rgba(210,153,34,0.15); color: var(--yellow); }
+  .badge-down { background: rgba(248,81,73,0.15); color: var(--red); }
+  .badge-unknown { background: rgba(139,148,158,0.15); color: var(--gray); }
+
+  .provider-details { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .provider-detail {
+    font-size: 12px; color: var(--text-secondary);
+  }
+  .provider-detail span { display: block; color: var(--text-primary); font-size: 13px; font-weight: 500; }
+  .provider-detail-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; }
+  .circuit-badge {
+    display: inline-block; font-size: 10px; padding: 1px 6px;
+    border-radius: 4px; font-weight: 600;
+  }
+  .circuit-closed { background: rgba(63,185,80,0.15); color: var(--green); }
+  .circuit-open { background: rgba(248,81,73,0.15); color: var(--red); }
+  .circuit-half-open { background: rgba(210,153,34,0.15); color: var(--yellow); }
+
+  /* Model table */
+  .section { margin-bottom: 32px; }
+  .search-bar {
+    width: 100%; padding: 10px 16px; margin-bottom: 12px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text-primary); font-size: 14px;
+    outline: none; transition: border-color 0.2s;
+  }
+  .search-bar:focus { border-color: var(--accent); }
+  .model-table {
+    width: 100%; border-collapse: collapse; font-size: 13px;
+  }
+  .model-table th {
+    text-align: left; padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary); font-weight: 600; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .model-table td {
+    padding: 8px 12px; border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+  }
+  .model-table tr:hover td { background: var(--bg-card); }
+  .model-status {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 12px;
+  }
+  .model-status .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+
+  /* Footer */
+  .footer {
+    text-align: center; padding: 24px;
+    color: var(--text-secondary); font-size: 12px;
+    border-top: 1px solid var(--border); margin-top: 32px;
+  }
+  .footer a { color: var(--accent); text-decoration: none; }
+
+  @media (max-width: 768px) {
+    .stats-bar { grid-template-columns: repeat(2, 1fr); }
+    .provider-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo"><span>Free</span>Swap</div>
+    <div class="status-dot offline" id="statusDot"></div>
+  </div>
+  <div class="header-right">
+    <span id="lastUpdate" style="font-size:12px;color:var(--text-secondary)"></span>
+    <a href="https://github.com/Electricitysheep/freeswap" target="_blank">GitHub</a>
+    <a href="/v1/status" target="_blank">API</a>
+  </div>
+</div>
+<div class="container">
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-card providers"><div class="stat-value" id="statProviders">-</div><div class="stat-label">Providers</div></div>
+    <div class="stat-card models"><div class="stat-value" id="statModels">-</div><div class="stat-label">Models</div></div>
+    <div class="stat-card uptime"><div class="stat-value" id="statHealthy">-</div><div class="stat-label">Healthy</div></div>
+    <div class="stat-card rpm"><div class="stat-value" id="statKeys">-</div><div class="stat-label">Total Keys</div></div>
+  </div>
+
+  <div class="section-title">Provider Health</div>
+  <div class="provider-grid" id="providerGrid">
+    <div style="grid-column:1/-1;text-align:center;color:var(--text-secondary);padding:40px;">Loading providers...</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Model Registry</div>
+    <input class="search-bar" id="modelSearch" placeholder="Search models..." oninput="filterModels()">
+    <div style="overflow-x:auto;">
+      <table class="model-table">
+        <thead><tr><th>Model</th><th>Provider</th><th>Status</th><th>Context</th></tr></thead>
+        <tbody id="modelTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<div class="footer">
+  FreeSwap v0.1.0 &mdash; <a href="https://github.com/Electricitysheep/freeswap">GitHub</a> &mdash; MIT License
+</div>
+
+<script>
+async function fetchJSON(url) {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  return resp.json();
+}
+
+function badgeClass(status) {
+  if (status === 'healthy' || status === 'active') return 'badge-healthy';
+  if (status === 'degraded') return 'badge-degraded';
+  if (status === 'down' || status === 'offline') return 'badge-down';
+  return 'badge-unknown';
+}
+
+function circuitClass(state) {
+  if (state === 'closed') return 'circuit-closed';
+  if (state === 'open') return 'circuit-open';
+  if (state === 'half-open') return 'circuit-half-open';
+  return 'circuit-closed';
+}
+
+async function loadDashboard() {
+  try {
+    const [statusData, modelsData] = await Promise.all([
+      fetchJSON('/v1/status'),
+      fetchJSON('/v1/models')
+    ]);
+
+    document.getElementById('lastUpdate').textContent =
+      'Updated: ' + new Date().toLocaleTimeString();
+
+    const providers = statusData.providers || [];
+    const models = modelsData.data || [];
+    const metaModels = models.filter(m => m.owned_by === '@freeswap' || m.owned_by === 'freeswap');
+    const realModels = models.filter(m => m.owned_by !== '@freeswap' && m.owned_by !== 'freeswap');
+
+    const healthyCount = providers.filter(p => p.status === 'healthy' || p.status === 'degraded').length;
+    const totalKeys = providers.reduce((sum, p) => {
+      const meta = window.providerMeta?.[p.provider];
+      return sum + (meta?.keys || 0);
+    }, 0);
+
+    document.getElementById('statProviders').textContent = providers.length;
+    document.getElementById('statModels').textContent = realModels.length;
+    document.getElementById('statHealthy').textContent = healthyCount + '/' + providers.length;
+    document.getElementById('statKeys').textContent = totalKeys || providers.length;
+
+    document.getElementById('statusDot').className = 'status-dot ' +
+      (healthyCount > 0 ? 'online' : 'offline');
+
+    const grid = document.getElementById('providerGrid');
+    grid.innerHTML = providers.length === 0
+      ? '<div style="grid-column:1/-1;text-align:center;color:var(--text-secondary);padding:40px;">No providers configured</div>'
+      : providers.map(p => `
+        <div class="provider-card status-${p.status || 'unknown'}">
+          <div class="provider-header">
+            <div class="provider-name">${p.provider}</div>
+            <div class="provider-badge ${badgeClass(p.status)}">${p.status || 'unknown'}</div>
+          </div>
+          <div class="provider-details">
+            <div class="provider-detail">
+              <div class="provider-detail-label">Latency</div>
+              <span>${p.avgLatencyMs ? p.avgLatencyMs + 'ms' : '-'}</span>
+            </div>
+            <div class="provider-detail">
+              <div class="provider-detail-label">Circuit</div>
+              <span><span class="circuit-badge ${circuitClass(p.circuitState)}">${p.circuitState || 'closed'}</span></span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+    const metaModelsHtml = metaModels.map(m => `
+      <tr>
+        <td style="color:var(--accent);font-weight:600;">${m.id}</td>
+        <td><span style="color:var(--yellow)">meta-model</span></td>
+        <td><span class="model-status"><span class="dot" style="background:var(--green)"></span> active</span></td>
+        <td>-</td>
+      </tr>
+    `).join('');
+
+    const modelRows = realModels.map(m => `
+      <tr>
+        <td style="font-family:monospace;font-size:12px;">${m.id}</td>
+        <td>${m.owned_by}</td>
+        <td><span class="model-status"><span class="dot" style="background:var(--green)"></span> active</span></td>
+        <td style="font-size:12px;color:var(--text-secondary)">-</td>
+      </tr>
+    `).join('');
+
+    document.getElementById('modelTableBody').innerHTML = metaModelsHtml + modelRows;
+
+  } catch (err) {
+    document.getElementById('providerGrid').innerHTML =
+      '<div style="grid-column:1/-1;text-align:center;color:var(--red);padding:40px;">Failed to load: ' + err.message + '</div>';
+  }
+}
+
+function filterModels() {
+  const q = document.getElementById('modelSearch').value.toLowerCase();
+  const rows = document.querySelectorAll('#modelTableBody tr');
+  rows.forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+loadDashboard();
+setInterval(loadDashboard, 5000);
+</script>
+</body>
+</html>
