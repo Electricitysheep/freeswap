@@ -1,0 +1,72 @@
+name: Discover Models
+
+on:
+  schedule:
+    # Weekly on Monday at 9AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  discover:
+    name: Discover Free Models
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Discover new models
+        id: discover
+        run: |
+          # Fetch model list from freellm.net
+          echo "Fetching model list from freellm.net..."
+          MODELS=$(curl -s https://freellm.net | grep -oP 'model-[a-zA-Z0-9-]+' | sort -u || echo "")
+          
+          # Also check awesome-free-llm-apis as backup
+          echo "Checking awesome-free-llm-apis..."
+          BACKUP_MODELS=$(curl -s "https://raw.githubusercontent.com/tyvcv/awesome-free-llm-apis/main/README.md" | grep -oP '\[.*?\]\(https://[^)]+\)' | grep -v "api" | head -20 || echo "")
+          
+          echo "Found models: $MODELS"
+          echo "backup=$BACKUP_MODELS" >> $GITHUB_OUTPUT
+          
+          # Run the update-registry script which handles comparison and PR creation
+          npm run update-registry
+        continue-on-error: true
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.changes.outputs.changes == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: 'chore: update model registry with discovered models'
+          title: 'chore: update model registry'
+          body: |
+            Automated model registry update from weekly discovery job.
+            
+            This PR was created by the `discover-models` workflow which:
+            - Checks freellm.net for new free models
+            - Compares with current registry
+            - Updates registry.yaml if new models found
+            
+            Please review the changes before merging.
+          branch: update-registry
+          delete-branch: true
