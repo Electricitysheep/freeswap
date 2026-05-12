@@ -51,7 +51,7 @@
 
   /* Stats bar */
   .stats-bar {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;
     margin-bottom: 24px;
   }
   .stat-card {
@@ -66,6 +66,11 @@
   .stat-card.models .stat-value { color: var(--green); }
   .stat-card.uptime .stat-value { color: var(--yellow); }
   .stat-card.rpm .stat-value { color: var(--accent); }
+  .stat-card.savings .stat-value { color: var(--green); }
+  .stat-card.requests .stat-value { color: var(--accent); }
+  .stat-card.tokens .stat-value { color: var(--accent); }
+  .stat-card.savings .stat-value { color: var(--green); font-size: 24px; }
+  .stat-value.green { color: var(--green); }
 
   /* Provider cards grid */
   .section-title {
@@ -184,6 +189,9 @@
     <div class="stat-card models"><div class="stat-value" id="statModels">-</div><div class="stat-label">Models</div></div>
     <div class="stat-card uptime"><div class="stat-value" id="statHealthy">-</div><div class="stat-label">Healthy</div></div>
     <div class="stat-card rpm"><div class="stat-value" id="statKeys">-</div><div class="stat-label">Total Keys</div></div>
+    <div class="stat-card savings"><div class="stat-value" id="statSavings">-</div><div class="stat-label">Saved</div></div>
+    <div class="stat-card requests"><div class="stat-value" id="statRequests">-</div><div class="stat-label">Requests</div></div>
+    <div class="stat-card tokens"><div class="stat-value" id="statTokens">-</div><div class="stat-label">Tokens</div></div>
   </div>
 
   <div class="section-title">Provider Health</div>
@@ -229,10 +237,15 @@ function circuitClass(state) {
 
 async function loadDashboard() {
   try {
-    const [statusData, modelsData] = await Promise.all([
+    const [statusData, modelsData, usageData] = await Promise.all([
       fetchJSON('/v1/status'),
-      fetchJSON('/v1/models')
+      fetchJSON('/v1/models'),
+      fetchJSON('/v1/usage')
     ]);
+
+    if (usageData && usageData.total) {
+      document.getElementById('statSaved').textContent = usageData.total.saved || '$0.00';
+    }
 
     document.getElementById('lastUpdate').textContent =
       'Updated: ' + new Date().toLocaleTimeString();

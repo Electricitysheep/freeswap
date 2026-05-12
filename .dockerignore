@@ -1,0 +1,28 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+
+# Git
+.git
+.github
+
+# Environment files
+.env
+.env.example
+
+# Tests
+tests
+
+# Documentation (keep README.md)
+*.md
+!README.md
+
+# Git files
+.gitignore
+
+# Scripts and configs (not needed in container)
+scripts
+tsconfig.json
+STAR_PLAN.md

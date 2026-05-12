@@ -7,6 +7,35 @@ import { ProviderFactory } from '../providers';
 import { FreeSwapRouter } from '../router';
 import { HealthMonitor } from '../monitor';
 
+type ProviderUsage = { inputTokens: number; outputTokens: number; requestCount: number };
+
+function trackUsage(tracker: Map<string, ProviderUsage>, providerId: string, usage: { prompt_tokens?: number; completion_tokens?: number }) {
+  const entry = tracker.get(providerId) || { inputTokens: 0, outputTokens: 0, requestCount: 0 };
+  entry.inputTokens += usage.prompt_tokens || 0;
+  entry.outputTokens += usage.completion_tokens || 0;
+  entry.requestCount += 1;
+  tracker.set(providerId, entry);
+}
+
+function getUsageSummary(tracker: Map<string, ProviderUsage>) {
+  const PROMPT_COST = 2.50;
+  const COMPLETION_COST = 10.00;
+  let totalInput = 0, totalOutput = 0, totalRequests = 0;
+  const providers: any[] = [];
+  tracker.forEach((u, id) => {
+    totalInput += u.inputTokens;
+    totalOutput += u.outputTokens;
+    totalRequests += u.requestCount;
+    providers.push({ provider: id, inputTokens: u.inputTokens, outputTokens: u.outputTokens, requestCount: u.requestCount });
+  });
+  const totalTokens = totalInput + totalOutput;
+  const saved = (totalInput / 1_000_000) * PROMPT_COST + (totalOutput / 1_000_000) * COMPLETION_COST;
+  return {
+    total: { saved: '$' + saved.toFixed(2), requests: totalRequests, tokens: totalTokens },
+    providers,
+  };
+}
+
 export async function createProxyServer(config: FreeSwapConfig) {
   const app = express();
   app.use(cors());
@@ -21,6 +50,8 @@ export async function createProxyServer(config: FreeSwapConfig) {
   const router = new FreeSwapRouter(registry, providers as any, config);
   const monitor = new HealthMonitor(providers as any, config, new Map());
   monitor.start();
+
+  const usageTracker = new Map<string, ProviderUsage>();
 
   app.get('/', (_req: any, res: any) => {
     res.sendFile(path.join(__dirname, 'dashboard.html'));
@@ -46,6 +77,10 @@ export async function createProxyServer(config: FreeSwapConfig) {
     res.json({ providers: status, timestamp: Date.now() });
   });
 
+  app.get('/v1/usage', (_req: any, res: any) => {
+    res.json(getUsageSummary(usageTracker));
+  });
+
   app.post('/v1/chat/completions', async (req: any, res: any) => {
     try {
       const decision = await router.route({
@@ -58,7 +93,7 @@ export async function createProxyServer(config: FreeSwapConfig) {
       const primary = providers.find((p) => p.getProviderId() === decision.provider && p.isEnabled());
 
       if (!primary) {
-        return sendFallback(providers, decision, req, res);
+        return sendFallback(providers, decision, req, res, usageTracker);
       }
 
       if (req.body.stream) {
@@ -71,11 +106,12 @@ export async function createProxyServer(config: FreeSwapConfig) {
       );
 
       if ('error' in response) {
-        const r = await tryFallbacks(providers, decision, req);
+        const r = await tryFallbacks(providers, decision, req, usageTracker);
         if (r) return res.json(r);
         return res.status(429).json(response);
       }
 
+      trackUsage(usageTracker, decision.provider, response.usage || {});
       res.json(formatChatResponse(response, decision.model, decision.provider, false));
     } catch (err: any) {
       res.status(500).json({
@@ -113,7 +149,7 @@ async function handleStream(provider: any, decision: any, req: any, res: any) {
   res.end();
 }
 
-async function tryFallbacks(providers: any[], decision: any, req: any) {
+async function tryFallbacks(providers: any[], decision: any, req: any, usageTracker: Map<string, ProviderUsage>) {
   for (const fb of decision.fallbackChain) {
     const p = providers.find((x: any) => x.getProviderId() === fb.provider && x.isEnabled());
     if (!p) continue;
@@ -123,14 +159,15 @@ async function tryFallbacks(providers: any[], decision: any, req: any) {
         { model: fb.model || '', tools: req.body.tools }
       );
       if ('error' in resp) continue;
+      trackUsage(usageTracker, fb.provider, resp.usage || {});
       return formatChatResponse(resp, fb.model, fb.provider, true);
     } catch { continue; }
   }
   return null;
 }
 
-async function sendFallback(providers: any[], decision: any, req: any, res: any) {
-  const r = await tryFallbacks(providers, decision, req);
+async function sendFallback(providers: any[], decision: any, req: any, res: any, usageTracker: Map<string, ProviderUsage>) {
+  const r = await tryFallbacks(providers, decision, req, usageTracker);
   if (r) return res.json(r);
   res.status(503).json({
     error: { message: 'All providers exhausted', type: 'no_provider', code: 'ALL_EXHAUSTED' },
