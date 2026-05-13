@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync } from 'fs';
 import { join } from 'path';
 import yaml from 'js-yaml';
 
@@ -36,7 +36,7 @@ async function validate() {
     if (ids.has(m.id)) errors.push(`models[${i}]: duplicate id "${m.id}"`);
     ids.add(m.id);
     if (!m.provider) errors.push(`models[${i}] (${m.id}): missing "provider"`);
-    if (!m.apiModelName) errors.push(`models[${i}] (${m.id}): missing "apiModelName"`);
+    if (!m.apiModelName && m.provider !== 'ollama') errors.push(`models[${i}] (${m.id}): missing "apiModelName"`);
     if (m.rateLimit) {
       const rl = m.rateLimit;
       if (typeof rl.rpm !== 'number') errors.push(`models[${i}] (${m.id}): rateLimit.rpm must be a number`);

@@ -243,9 +243,9 @@ async function loadDashboard() {
       fetchJSON('/v1/usage')
     ]);
 
-    if (usageData && usageData.total) {
-      document.getElementById('statSaved').textContent = usageData.total.saved || '$0.00';
-    }
+    document.getElementById('statSavings').textContent = usageData?.total?.saved ?? '-';
+    document.getElementById('statRequests').textContent = (usageData?.total?.requests ?? 0).toLocaleString();
+    document.getElementById('statTokens').textContent = (usageData?.total?.tokens ?? 0).toLocaleString();
 
     document.getElementById('lastUpdate').textContent =
       'Updated: ' + new Date().toLocaleTimeString();
