@@ -41,11 +41,20 @@ const PROVIDER_ENV_MAP: Record<ProviderId, { envKey: string; defaultBaseUrl: str
     envKey: 'OLLAMA_BASE_URL',
     defaultBaseUrl: 'http://localhost:11434',
   },
+  kiro: {
+    envKey: 'KIRO_API_KEY',
+    defaultBaseUrl: 'https://api.kiro.ai/v1',
+  },
+  'opencode-free': {
+    envKey: 'OPENCODE_FREE_KEY',
+    defaultBaseUrl: 'https://opencode.ai/zen/v1',
+  },
 };
 
 const ALL_PROVIDERS: ProviderId[] = [
   'groq', 'gemini', 'openrouter', 'cerebras', 'mistral',
   'nvidia-nim', 'cloudflare', 'github-models', 'ollama',
+  'kiro', 'opencode-free',
 ];
 
 function loadProviderConfigs(): ProviderConfig[] {

@@ -74,10 +74,24 @@ export const PROVIDER_META: Record<ProviderId, ProviderMeta> = {
   },
   ollama: {
     name: 'Ollama',
-    description: 'Run models locally on your own hardware. No rate limits, no costs, full privacy.',
+    description: 'Local inference — no rate limits, no costs, full privacy',
     baseUrl: 'http://localhost:11434',
-    signupUrl: 'https://ollama.com/download',
-    docsUrl: 'https://github.com/ollama/ollama/blob/main/docs/README.md',
+    signupUrl: 'https://ollama.ai',
+    docsUrl: 'https://ollama.ai',
+  },
+  kiro: {
+    name: 'Kiro AI',
+    description: 'Free unlimited Claude 4.5 + GLM-5 + MiniMax via OAuth',
+    baseUrl: 'https://api.kiro.ai/v1',
+    signupUrl: 'https://kiro.ai',
+    docsUrl: 'https://kiro.ai',
+  },
+  'opencode-free': {
+    name: 'OpenCode Free',
+    description: 'No-auth passthrough proxy, auto-fetches free models',
+    baseUrl: 'https://opencode.ai/zen/v1',
+    signupUrl: 'https://opencode.ai',
+    docsUrl: 'https://opencode.ai',
   },
 };
 

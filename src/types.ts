@@ -12,7 +12,9 @@ export type ProviderId =
   | 'nvidia-nim'
   | 'cloudflare'
   | 'github-models'
-  | 'ollama';
+  | 'ollama'
+  | 'kiro'
+  | 'opencode-free';
 
 /** Provider capability flags */
 export interface ProviderCapabilities {

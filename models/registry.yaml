@@ -12,7 +12,7 @@ metaModels:
   free:
     description: "Max availability — rotates across all available providers"
     chains:
-      - [groq, gemini, openrouter, cerebras, mistral, nvidia-nim, cloudflare, github-models]
+      - [groq, gemini, openrouter, cerebras, mistral, nvidia-nim, cloudflare, github-models, kiro, opencode-free]
   free-fast:
     description: "Lowest latency — fastest providers first"
     chains:
@@ -291,3 +291,53 @@ models:
     status: active
     lastChecked: null
     notes: "Local inference — no rate limits, no costs"
+
+  # ---- Kiro AI (Free Claude) ----
+  - id: kiro/claude-4.5-sonnet
+    name: Claude 4.5 Sonnet (Kiro)
+    provider: kiro
+    apiModelName: claude-4.5-sonnet
+    rateLimit: { rpm: 30, rpd: 5000, tpm: 100000, tpd: 10000000 }
+    capabilities:
+      toolUse: true
+      structuredOutput: true
+      vision: true
+      streaming: true
+      maxContext: 200000
+      maxOutput: 8192
+    status: active
+    lastChecked: null
+    notes: "Free unlimited Claude 4.5 via Kiro AI"
+
+  - id: kiro/glm-5
+    name: GLM-5 (Kiro)
+    provider: kiro
+    apiModelName: glm-5
+    rateLimit: { rpm: 30, rpd: 5000, tpm: 100000, tpd: 10000000 }
+    capabilities:
+      toolUse: true
+      structuredOutput: true
+      vision: false
+      streaming: true
+      maxContext: 131000
+      maxOutput: 4096
+    status: active
+    lastChecked: null
+    notes: "Free unlimited GLM-5 via Kiro AI"
+
+  # ---- OpenCode Free ----
+  - id: opencode-free/gemini-2.5-flash
+    name: Gemini 2.5 Flash (OpenCode)
+    provider: opencode-free
+    apiModelName: gemini-2.5-flash
+    rateLimit: { rpm: 30, rpd: 5000, tpm: 100000, tpd: 10000000 }
+    capabilities:
+      toolUse: true
+      structuredOutput: true
+      vision: true
+      streaming: true
+      maxContext: 200000
+      maxOutput: 8192
+    status: active
+    lastChecked: null
+    notes: "Free no-auth Gemini via OpenCode"

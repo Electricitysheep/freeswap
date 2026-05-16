@@ -1,15 +1,9 @@
 import { ProviderId, ModelEntry } from '../types';
 
 const VALID_PROVIDERS: ProviderId[] = [
-  'groq',
-  'gemini',
-  'openrouter',
-  'cerebras',
-  'mistral',
-  'nvidia-nim',
-  'cloudflare',
-  'github-models',
-  'ollama',
+  'groq', 'gemini', 'openrouter', 'cerebras', 'mistral',
+  'nvidia-nim', 'cloudflare', 'github-models', 'ollama',
+  'kiro', 'opencode-free',
 ];
 
 const VALID_STATUSES: ModelEntry['status'][] = ['active', 'degraded', 'offline', 'unknown'];

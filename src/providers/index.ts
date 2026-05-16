@@ -9,6 +9,8 @@ import { NvidiaNimProvider } from './nvidia-nim';
 import { CloudflareProvider } from './cloudflare';
 import { GitHubModelsProvider } from './github-models';
 import { OllamaProvider } from './ollama';
+import { KiroProvider } from './kiro';
+import { OpenCodeFreeProvider } from './opencode-free';
 
 export { BaseLLMProvider, CompletionOptions } from './base';
 export { GroqProvider } from './groq';
@@ -20,6 +22,8 @@ export { NvidiaNimProvider } from './nvidia-nim';
 export { CloudflareProvider } from './cloudflare';
 export { GitHubModelsProvider } from './github-models';
 export { OllamaProvider } from './ollama';
+export { KiroProvider } from './kiro';
+export { OpenCodeFreeProvider } from './opencode-free';
 
 export class ProviderFactory {
   private providers = new Map<ProviderId, BaseLLMProvider>();
@@ -54,6 +58,12 @@ export class ProviderFactory {
         break;
       case 'ollama':
         provider = new OllamaProvider(config);
+        break;
+      case 'kiro':
+        provider = new KiroProvider(config);
+        break;
+      case 'opencode-free':
+        provider = new OpenCodeFreeProvider(config);
         break;
       default:
         throw new Error(`Unknown provider: ${id}`);

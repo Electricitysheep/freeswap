@@ -6,6 +6,7 @@ import { loadRegistry } from '../registry';
 import { ProviderFactory } from '../providers';
 import { FreeSwapRouter } from '../router';
 import { HealthMonitor } from '../monitor';
+import { TokenSaver } from '../token-saver';
 
 type ProviderUsage = { inputTokens: number; outputTokens: number; requestCount: number };
 
@@ -52,6 +53,17 @@ export async function createProxyServer(config: FreeSwapConfig) {
   monitor.start();
 
   const usageTracker = new Map<string, ProviderUsage>();
+  const tokenSaver = new TokenSaver({ enableCavemanMode: !!config.masterKey });
+
+  function compressMessages(messages: any[]): any[] {
+    const saved = tokenSaver.estimateSavings(messages);
+    if (saved.savingsPercent > 0) {
+      if (config.logLevel === 'debug') {
+        console.debug(`[TokenSaver] Saved ${saved.savingsPercent}% (${saved.originalChars} → ${saved.compressedChars} chars)`);
+      }
+    }
+    return tokenSaver.processMessages(messages);
+  }
 
   app.get('/', (_req: any, res: any) => {
     res.sendFile(path.join(__dirname, 'dashboard.html'));
@@ -83,6 +95,7 @@ export async function createProxyServer(config: FreeSwapConfig) {
 
   app.post('/v1/chat/completions', async (req: any, res: any) => {
     try {
+      req.body.messages = compressMessages(req.body.messages);
       const decision = await router.route({
         model: req.body.model,
         messages: req.body.messages,
@@ -124,6 +137,7 @@ export async function createProxyServer(config: FreeSwapConfig) {
 }
 
 async function handleStream(provider: any, decision: any, req: any, res: any) {
+  const compressed = req._compressedMessages || req.body.messages.map((m: any) => ({ role: m.role, content: m.content }));
   res.writeHead(200, {
     'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive',
     'X-FreeSwap-Provider': decision.provider, 'X-FreeSwap-Model': decision.model, 'X-FreeSwap-Reason': decision.reason,
