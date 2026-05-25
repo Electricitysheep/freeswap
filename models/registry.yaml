@@ -1,343 +1,329 @@
 # FreeSwap Model Registry
-# Community-maintained list of verified free LLM models.
-# Last updated: 2026-05-11
-# To contribute: https://github.com/yourusername/freeswap
+# Auto-generated from knowledge sources
+# Last updated: 2026-05-25T12:23:38.088Z
 ---
-version: "1.0"
-lastUpdated: "2026-05-11"
-
-# Meta-model definitions map meta-model names to ordered provider chains.
-# Providers listed first are tried first.
+lastUpdated: '2026-05-25'
 metaModels:
   free:
-    description: "Max availability — rotates across all available providers"
     chains:
-      - [groq, gemini, openrouter, cerebras, mistral, nvidia-nim, cloudflare, github-models, kiro, opencode-free]
+      - - groq
+        - gemini
+        - openrouter
+        - cerebras
+        - mistral
+        - nvidia-nim
+        - cloudflare
+        - github-models
+    description: Max availability — rotates across all available providers
   free-fast:
-    description: "Lowest latency — fastest providers first"
     chains:
-      - [groq, cerebras, gemini, nvidia-nim]
-      - [openrouter, mistral, cloudflare, github-models]
+      - - groq
+        - cerebras
+        - gemini
+        - nvidia-nim
+      - - openrouter
+        - mistral
+        - cloudflare
+        - github-models
+    description: Lowest latency — fastest providers first
   free-smart:
-    description: "Best reasoning — most capable providers first"
     chains:
-      - [gemini, nvidia-nim, groq, openrouter]
-      - [cerebras, mistral, github-models, cloudflare]
-
+      - - gemini
+        - nvidia-nim
+        - groq
+        - openrouter
+      - - cerebras
+        - mistral
+        - github-models
+        - cloudflare
+    description: Best reasoning — most capable providers first
 models:
-  # ---- Groq ----
-  - id: groq/llama-3.3-70b
+  - apiModelName: llama-3.3-70b-versatile
+    capabilities:
+      maxContext: 128000
+      maxOutput: 32768
+      streaming: true
+      structuredOutput: true
+      toolUse: true
+      vision: false
+    id: groq/llama-3.3-70b
+    lastChecked: null
     name: Llama 3.3 70B
     provider: groq
-    apiModelName: llama-3.3-70b-versatile
-    rateLimit: { rpm: 30, rpd: 1000, tpm: 6000, tpd: 500000 }
+    rateLimit:
+      rpd: 1000
+      rpm: 30
+      tpd: 500000
+      tpm: 6000
+    status: active
+  - apiModelName: meta-llama/llama-4-scout-17b-16e-instruct
     capabilities:
-      toolUse: true
-      structuredOutput: true
-      vision: false
-      streaming: true
       maxContext: 128000
       maxOutput: 32768
-    status: active
+      streaming: true
+      structuredOutput: true
+      toolUse: true
+      vision: false
+    id: groq/llama-4-scout
     lastChecked: null
-    notes: "Fastest free inference (~315 tok/s)"
-    avgLatencyMs: 200
-
-  - id: groq/llama-4-scout
     name: Llama 4 Scout 17B
     provider: groq
-    apiModelName: meta-llama/llama-4-scout-17b-16e-instruct
-    rateLimit: { rpm: 30, rpd: 1000, tpm: 6000, tpd: 500000 }
-    capabilities:
-      toolUse: true
-      structuredOutput: true
-      vision: false
-      streaming: true
-      maxContext: 128000
-      maxOutput: 32768
+    rateLimit:
+      rpd: 1000
+      rpm: 30
+      tpd: 500000
+      tpm: 6000
     status: active
-    lastChecked: null
-    avgLatencyMs: 180
-
-  - id: groq/qwen3-32b
-    name: Qwen3 32B
-    provider: groq
-    apiModelName: qwen-3-32b
-    rateLimit: { rpm: 30, rpd: 1000, tpm: 6000, tpd: 500000 }
+  - apiModelName: qwen-3-32b
     capabilities:
-      toolUse: true
-      structuredOutput: true
-      vision: false
-      streaming: true
       maxContext: 32000
       maxOutput: 8192
-    status: active
+      streaming: true
+      structuredOutput: true
+      toolUse: true
+      vision: false
+    id: groq/qwen3-32b
     lastChecked: null
-    avgLatencyMs: 150
-
-  # ---- Google Gemini ----
-  - id: gemini/flash-2.5
+    name: Qwen3 32B
+    provider: groq
+    rateLimit:
+      rpd: 1000
+      rpm: 30
+      tpd: 500000
+      tpm: 6000
+    status: active
+  - apiModelName: gemini-2.5-flash
+    capabilities:
+      maxContext: 1048576
+      maxOutput: 8192
+      streaming: true
+      structuredOutput: true
+      toolUse: true
+      vision: true
+    id: gemini/flash-2.5
+    lastChecked: null
     name: Gemini 2.5 Flash
     provider: gemini
-    apiModelName: gemini-2.5-flash
-    rateLimit: { rpm: 10, rpd: 1500, tpm: 250000, tpd: 1000000 }
+    rateLimit:
+      rpd: 1500
+      rpm: 10
+      tpd: 1000000
+      tpm: 250000
+    status: active
+  - apiModelName: gemini-2.5-pro
     capabilities:
-      toolUse: true
-      structuredOutput: true
-      vision: true
-      streaming: true
       maxContext: 1048576
       maxOutput: 8192
-    status: active
+      streaming: true
+      structuredOutput: true
+      toolUse: true
+      vision: true
+    id: gemini/pro-2.5
     lastChecked: null
-    notes: "Best overall free tier — 1M context, multimodal, 1500 req/day"
-    avgLatencyMs: 500
-
-  - id: gemini/pro-2.5
     name: Gemini 2.5 Pro
     provider: gemini
-    apiModelName: gemini-2.5-pro
-    rateLimit: { rpm: 5, rpd: 50, tpm: 100000, tpd: 500000 }
-    capabilities:
-      toolUse: true
-      structuredOutput: true
-      vision: true
-      streaming: true
-      maxContext: 1048576
-      maxOutput: 8192
+    rateLimit:
+      rpd: 50
+      rpm: 5
+      tpd: 500000
+      tpm: 100000
     status: active
+  - apiModelName: openrouter/free
+    capabilities:
+      maxContext: 200000
+      maxOutput: 65536
+      streaming: true
+      structuredOutput: true
+      toolUse: true
+      vision: true
+    id: openrouter/free
     lastChecked: null
-    notes: "Stronger reasoning, stricter rate limits"
-    avgLatencyMs: 800
-
-  # ---- OpenRouter Free ----
-  - id: openrouter/free
     name: OpenRouter Free Router
     provider: openrouter
-    apiModelName: openrouter/free
-    rateLimit: { rpm: 20, rpd: 50, tpm: 100000, tpd: 500000 }
-    capabilities:
-      toolUse: true
-      structuredOutput: true
-      vision: true
-      streaming: true
-      maxContext: 200000
-      maxOutput: 65536
+    rateLimit:
+      rpd: 50
+      rpm: 20
+      tpd: 500000
+      tpm: 100000
     status: active
+  - apiModelName: llama-3.3-70b
+    capabilities:
+      maxContext: 128000
+      maxOutput: 8192
+      streaming: true
+      structuredOutput: true
+      toolUse: true
+      vision: false
+    id: cerebras/llama-3.3-70b
     lastChecked: null
-    notes: "Routes to 27+ free models, best variety"
-
-  # ---- Cerebras ----
-  - id: cerebras/llama-3.3-70b
     name: Llama 3.3 70B (Cerebras)
     provider: cerebras
-    apiModelName: llama-3.3-70b
-    rateLimit: { rpm: 30, rpd: 14400, tpm: 60000, tpd: 1000000 }
+    rateLimit:
+      rpd: 14400
+      rpm: 30
+      tpd: 1000000
+      tpm: 60000
+    status: active
+  - apiModelName: gpt-oss-120b
     capabilities:
-      toolUse: true
-      structuredOutput: false
-      vision: false
-      streaming: true
       maxContext: 128000
       maxOutput: 8192
-    status: active
+      streaming: true
+      structuredOutput: false
+      toolUse: false
+      vision: false
+    id: cerebras/gpt-oss-120b
     lastChecked: null
-    notes: "Highest daily token quota (~1M/day), ~1000 tok/s"
-    avgLatencyMs: 150
-
-  - id: cerebras/gpt-oss-120b
     name: GPT-OSS 120B
     provider: cerebras
-    apiModelName: gpt-oss-120b
-    rateLimit: { rpm: 30, rpd: 14400, tpm: 60000, tpd: 1000000 }
-    capabilities:
-      toolUse: false
-      structuredOutput: false
-      vision: false
-      streaming: true
-      maxContext: 128000
-      maxOutput: 8192
+    rateLimit:
+      rpd: 14400
+      rpm: 30
+      tpd: 1000000
+      tpm: 60000
     status: active
-    lastChecked: null
-
-  # ---- Mistral AI ----
-  - id: mistral/small
-    name: Mistral Small 3.1
-    provider: mistral
-    apiModelName: mistral-small-3.1-latest
-    rateLimit: { rpm: 2, rpd: 3000, tpm: 10000, tpd: 1000000000 }
+  - apiModelName: mistral-small-3.1-latest
     capabilities:
-      toolUse: true
-      structuredOutput: true
-      vision: false
-      streaming: true
       maxContext: 128000
       maxOutput: 32768
-    status: active
-    lastChecked: null
-    notes: "1B tokens/month free — highest monthly quota"
-
-  - id: mistral/codestral
-    name: Codestral
-    provider: mistral
-    apiModelName: codestral-latest
-    rateLimit: { rpm: 2, rpd: 3000, tpm: 10000, tpd: 500000000 }
-    capabilities:
-      toolUse: true
-      structuredOutput: true
-      vision: false
       streaming: true
+      structuredOutput: true
+      toolUse: true
+      vision: false
+    id: mistral/small
+    lastChecked: null
+    name: Mistral Small 3.1
+    provider: mistral
+    rateLimit:
+      rpd: 3000
+      rpm: 2
+      tpd: 1000000000
+      tpm: 10000
+    status: active
+  - apiModelName: codestral-latest
+    capabilities:
       maxContext: 256000
       maxOutput: 65536
-    status: active
+      streaming: true
+      structuredOutput: true
+      toolUse: true
+      vision: false
+    id: mistral/codestral
     lastChecked: null
-    notes: "Best free code generation model"
-
-  # ---- NVIDIA NIM ----
-  - id: nvidia-nim/llama-3.3-70b
+    name: Codestral
+    provider: mistral
+    rateLimit:
+      rpd: 3000
+      rpm: 2
+      tpd: 500000000
+      tpm: 10000
+    status: active
+  - apiModelName: meta/llama-3.3-70b-instruct
+    capabilities:
+      maxContext: 128000
+      maxOutput: 4096
+      streaming: true
+      structuredOutput: true
+      toolUse: true
+      vision: false
+    id: nvidia-nim/llama-3.3-70b
+    lastChecked: null
     name: Llama 3.3 70B (NVIDIA)
     provider: nvidia-nim
-    apiModelName: meta/llama-3.3-70b-instruct
-    rateLimit: { rpm: 40, rpd: 1000, tpm: 100000, tpd: 1000000 }
-    capabilities:
-      toolUse: true
-      structuredOutput: true
-      vision: false
-      streaming: true
-      maxContext: 128000
-      maxOutput: 4096
+    rateLimit:
+      rpd: 1000
+      rpm: 40
+      tpd: 1000000
+      tpm: 100000
     status: active
+  - apiModelName: deepseek-ai/deepseek-r1
+    capabilities:
+      maxContext: 128000
+      maxOutput: 8192
+      streaming: true
+      structuredOutput: false
+      toolUse: false
+      vision: false
+    id: nvidia-nim/deepseek-r1
     lastChecked: null
-    notes: "1000 free credits, enterprise-grade"
-
-  - id: nvidia-nim/deepseek-r1
     name: DeepSeek R1 (NVIDIA)
     provider: nvidia-nim
-    apiModelName: deepseek-ai/deepseek-r1
-    rateLimit: { rpm: 40, rpd: 1000, tpm: 100000, tpd: 1000000 }
-    capabilities:
-      toolUse: false
-      structuredOutput: false
-      vision: false
-      streaming: true
-      maxContext: 128000
-      maxOutput: 8192
+    rateLimit:
+      rpd: 1000
+      rpm: 40
+      tpd: 1000000
+      tpm: 100000
     status: active
+  - apiModelName: '@cf/meta/llama-3.3-70b-instruct-fp8-fast'
+    capabilities:
+      maxContext: 128000
+      maxOutput: 4096
+      streaming: true
+      structuredOutput: false
+      toolUse: false
+      vision: false
+    id: cloudflare/llama-3.3-70b
     lastChecked: null
-    notes: "Strong chain-of-thought reasoning"
-
-  # ---- Cloudflare Workers AI ----
-  - id: cloudflare/llama-3.3-70b
     name: Llama 3.3 70B (Cloudflare)
     provider: cloudflare
-    apiModelName: "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
-    rateLimit: { rpm: 20, rpd: 300, tpm: 50000, tpd: 10000000 }
-    capabilities:
-      toolUse: false
-      structuredOutput: false
-      vision: false
-      streaming: true
-      maxContext: 128000
-      maxOutput: 4096
+    rateLimit:
+      rpd: 300
+      rpm: 20
+      tpd: 10000000
+      tpm: 50000
     status: active
-    lastChecked: null
-    notes: "Edge-deployed, 10000 neurons/day free"
-
-  # ---- GitHub Models ----
-  - id: github-models/gpt-4o-mini
-    name: GPT-4o Mini
-    provider: github-models
-    apiModelName: gpt-4o-mini
-    rateLimit: { rpm: 15, rpd: 150, tpm: 100000, tpd: 500000 }
+  - apiModelName: gpt-4o-mini
     capabilities:
-      toolUse: true
-      structuredOutput: true
-      vision: true
-      streaming: true
       maxContext: 128000
       maxOutput: 16384
-    status: active
+      streaming: true
+      structuredOutput: true
+      toolUse: true
+      vision: true
+    id: github-models/gpt-4o-mini
     lastChecked: null
-    notes: "Free GPT-4o-mini via GitHub account"
-
-  - id: github-models/llama-3.3-70b
+    name: GPT-4o Mini
+    provider: github-models
+    rateLimit:
+      rpd: 150
+      rpm: 15
+      tpd: 500000
+      tpm: 100000
+    status: active
+  - apiModelName: llama-3.3-70b-instruct
+    capabilities:
+      maxContext: 128000
+      maxOutput: 4096
+      streaming: true
+      structuredOutput: true
+      toolUse: true
+      vision: false
+    id: github-models/llama-3.3-70b
+    lastChecked: null
     name: Llama 3.3 70B (GitHub)
     provider: github-models
-    apiModelName: llama-3.3-70b-instruct
-    rateLimit: { rpm: 15, rpd: 150, tpm: 100000, tpd: 500000 }
+    rateLimit:
+      rpd: 150
+      rpm: 15
+      tpd: 500000
+      tpm: 100000
+    status: active
+  - apiModelName: ''
     capabilities:
-      toolUse: true
-      structuredOutput: true
-      vision: false
-      streaming: true
       maxContext: 128000
       maxOutput: 4096
-    status: active
+      streaming: true
+      structuredOutput: true
+      toolUse: true
+      vision: false
+    id: ollama/local
     lastChecked: null
-
-  # ---- Ollama (Local) ----
-  - id: ollama/local
     name: Ollama Local
     provider: ollama
-    apiModelName: ""  # Will be resolved dynamically
-    rateLimit: { rpm: 9999, rpd: 99999, tpm: 999999, tpd: 99999999 }
-    capabilities:
-      toolUse: true
-      structuredOutput: true
-      vision: false
-      streaming: true
-      maxContext: 128000
-      maxOutput: 4096
+    rateLimit:
+      rpd: 99999
+      rpm: 9999
+      tpd: 99999999
+      tpm: 999999
     status: active
-    lastChecked: null
-    notes: "Local inference — no rate limits, no costs"
-
-  # ---- Kiro AI (Free Claude) ----
-  - id: kiro/claude-4.5-sonnet
-    name: Claude 4.5 Sonnet (Kiro)
-    provider: kiro
-    apiModelName: claude-4.5-sonnet
-    rateLimit: { rpm: 30, rpd: 5000, tpm: 100000, tpd: 10000000 }
-    capabilities:
-      toolUse: true
-      structuredOutput: true
-      vision: true
-      streaming: true
-      maxContext: 200000
-      maxOutput: 8192
-    status: active
-    lastChecked: null
-    notes: "Free unlimited Claude 4.5 via Kiro AI"
-
-  - id: kiro/glm-5
-    name: GLM-5 (Kiro)
-    provider: kiro
-    apiModelName: glm-5
-    rateLimit: { rpm: 30, rpd: 5000, tpm: 100000, tpd: 10000000 }
-    capabilities:
-      toolUse: true
-      structuredOutput: true
-      vision: false
-      streaming: true
-      maxContext: 131000
-      maxOutput: 4096
-    status: active
-    lastChecked: null
-    notes: "Free unlimited GLM-5 via Kiro AI"
-
-  # ---- OpenCode Free ----
-  - id: opencode-free/gemini-2.5-flash
-    name: Gemini 2.5 Flash (OpenCode)
-    provider: opencode-free
-    apiModelName: gemini-2.5-flash
-    rateLimit: { rpm: 30, rpd: 5000, tpm: 100000, tpd: 10000000 }
-    capabilities:
-      toolUse: true
-      structuredOutput: true
-      vision: true
-      streaming: true
-      maxContext: 200000
-      maxOutput: 8192
-    status: active
-    lastChecked: null
-    notes: "Free no-auth Gemini via OpenCode"
+version: '1.0'
