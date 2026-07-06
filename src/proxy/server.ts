@@ -1,12 +1,19 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
-import { FreeSwapConfig } from '../types';
+import { FreeSwapConfig, ProviderId } from '../types';
 import { loadRegistry } from '../registry';
 import { ProviderFactory } from '../providers';
 import { FreeSwapRouter } from '../router';
 import { HealthMonitor } from '../monitor';
+import { CircuitBreaker, CircuitBreakerOptions } from '../monitor/circuit-breaker';
 import { TokenSaver } from '../token-saver';
+
+/** Optional dependency overrides, used by tests to inject fake providers. */
+export interface ProxyServerDeps {
+  providers?: any[];
+  breakerOptions?: CircuitBreakerOptions;
+}
 
 type ProviderUsage = { inputTokens: number; outputTokens: number; requestCount: number };
 
@@ -37,20 +44,38 @@ function getUsageSummary(tracker: Map<string, ProviderUsage>) {
   };
 }
 
-export async function createProxyServer(config: FreeSwapConfig) {
+export async function createProxyServer(config: FreeSwapConfig, deps: ProxyServerDeps = {}) {
   const app = express();
   app.use(cors());
   app.use(express.json({ limit: '10mb' }));
 
   const registry = await loadRegistry(config.registryPath);
-  const factory = new ProviderFactory();
-  for (const pcfg of config.providers) {
-    if (pcfg.enabled) factory.createProvider(pcfg.id, pcfg);
+  let providers: any[];
+  if (deps.providers) {
+    providers = deps.providers;
+  } else {
+    const factory = new ProviderFactory();
+    for (const pcfg of config.providers) {
+      if (pcfg.enabled) factory.createProvider(pcfg.id, pcfg);
+    }
+    providers = factory.getAll();
   }
-  const providers = factory.getAll();
+
+  // One circuit breaker per provider, shared by the request path (gating +
+  // outcome recording) and the background health monitor (probe outcomes).
+  const breakers = new Map<ProviderId, CircuitBreaker>();
+  for (const p of providers) {
+    const id = p.getProviderId() as ProviderId;
+    breakers.set(id, new CircuitBreaker(id, deps.breakerOptions));
+  }
+
   const router = new FreeSwapRouter(registry, providers as any, config);
-  const monitor = new HealthMonitor(providers as any, config, new Map());
+  const monitor = new HealthMonitor(providers as any, config, breakers);
   monitor.start();
+
+  // Exposed for lifecycle management and tests.
+  app.locals.monitor = monitor;
+  app.locals.breakers = breakers;
 
   const usageTracker = new Map<string, ProviderUsage>();
   const tokenSaver = new TokenSaver({ enableCavemanMode: !!config.masterKey });
@@ -104,13 +129,15 @@ export async function createProxyServer(config: FreeSwapConfig) {
       });
 
       const primary = providers.find((p) => p.getProviderId() === decision.provider && p.isEnabled());
+      const breaker = breakers.get(decision.provider);
 
-      if (!primary) {
-        return sendFallback(providers, decision, req, res, usageTracker);
+      // Circuit open → skip the primary entirely, go straight to fallbacks.
+      if (!primary || (breaker && !breaker.allowRequest())) {
+        return sendFallback(providers, decision, req, res, usageTracker, breakers);
       }
 
       if (req.body.stream) {
-        return handleStream(primary, decision, req, res);
+        return handleStream(primary, decision, req, res, breaker);
       }
 
       const response = await primary.chatCompletion(
@@ -119,11 +146,13 @@ export async function createProxyServer(config: FreeSwapConfig) {
       );
 
       if ('error' in response) {
-        const r = await tryFallbacks(providers, decision, req, usageTracker);
+        breaker?.recordFailure();
+        const r = await tryFallbacks(providers, decision, req, usageTracker, breakers, decision.provider);
         if (r) return res.json(r);
         return res.status(429).json(response);
       }
 
+      breaker?.recordSuccess();
       trackUsage(usageTracker, decision.provider, response.usage || {});
       res.json(formatChatResponse(response, decision.model, decision.provider, false));
     } catch (err: any) {
@@ -136,7 +165,7 @@ export async function createProxyServer(config: FreeSwapConfig) {
   return app;
 }
 
-async function handleStream(provider: any, decision: any, req: any, res: any) {
+async function handleStream(provider: any, decision: any, req: any, res: any, breaker?: CircuitBreaker) {
   const compressed = req._compressedMessages || req.body.messages.map((m: any) => ({ role: m.role, content: m.content }));
   res.writeHead(200, {
     'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive',
@@ -148,8 +177,9 @@ async function handleStream(provider: any, decision: any, req: any, res: any) {
       { model: decision.model, tools: req.body.tools, max_tokens: req.body.max_tokens, temperature: req.body.temperature }
     );
     let id = 0;
+    let sawError = false;
     for await (const chunk of stream) {
-      if ('error' in chunk) continue;
+      if ('error' in chunk) { sawError = true; continue; }
       const choice = chunk.choices?.[0];
       res.write(`data: ${JSON.stringify({
         id: `chatcmpl-${id++}`, object: 'chat.completion.chunk',
@@ -158,30 +188,58 @@ async function handleStream(provider: any, decision: any, req: any, res: any) {
       })}\n\n`);
       if (choice?.finish_reason) break;
     }
+    if (sawError) breaker?.recordFailure();
+    else breaker?.recordSuccess();
     res.write('data: [DONE]\n\n');
-  } catch { res.write(`data: ${JSON.stringify({ error: 'stream failed' })}\n\n`); }
+  } catch {
+    breaker?.recordFailure();
+    res.write(`data: ${JSON.stringify({ error: 'stream failed' })}\n\n`);
+  }
   res.end();
 }
 
-async function tryFallbacks(providers: any[], decision: any, req: any, usageTracker: Map<string, ProviderUsage>) {
+async function tryFallbacks(
+  providers: any[],
+  decision: any,
+  req: any,
+  usageTracker: Map<string, ProviderUsage>,
+  breakers: Map<ProviderId, CircuitBreaker>,
+  skipProvider?: string
+) {
   for (const fb of decision.fallbackChain) {
+    // The chain starts with the primary; skip it when it just failed.
+    if (fb.provider === skipProvider) continue;
     const p = providers.find((x: any) => x.getProviderId() === fb.provider && x.isEnabled());
     if (!p) continue;
+    const breaker = breakers.get(fb.provider);
+    if (breaker && !breaker.allowRequest()) continue;
     try {
       const resp = await p.chatCompletion(
         req.body.messages.map((m: any) => ({ role: m.role, content: m.content })),
         { model: fb.model || '', tools: req.body.tools }
       );
-      if ('error' in resp) continue;
+      if ('error' in resp) { breaker?.recordFailure(); continue; }
+      breaker?.recordSuccess();
       trackUsage(usageTracker, fb.provider, resp.usage || {});
       return formatChatResponse(resp, fb.model, fb.provider, true);
-    } catch { continue; }
+    } catch {
+      breaker?.recordFailure();
+      continue;
+    }
   }
   return null;
 }
 
-async function sendFallback(providers: any[], decision: any, req: any, res: any, usageTracker: Map<string, ProviderUsage>) {
-  const r = await tryFallbacks(providers, decision, req, usageTracker);
+async function sendFallback(
+  providers: any[],
+  decision: any,
+  req: any,
+  res: any,
+  usageTracker: Map<string, ProviderUsage>,
+  breakers: Map<ProviderId, CircuitBreaker>,
+  skipProvider?: string
+) {
+  const r = await tryFallbacks(providers, decision, req, usageTracker, breakers, skipProvider);
   if (r) return res.json(r);
   res.status(503).json({
     error: { message: 'All providers exhausted', type: 'no_provider', code: 'ALL_EXHAUSTED' },
