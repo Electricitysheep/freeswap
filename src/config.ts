@@ -88,6 +88,7 @@ export function loadConfig(): FreeSwapConfig {
     logLevel: parseLogLevel(process.env.LOG_LEVEL),
     providers,
     registryPath: process.env.REGISTRY_PATH,
+    tokenSaverEnabled: process.env.TOKEN_SAVER_ENABLED === 'true',
   };
 }
 
