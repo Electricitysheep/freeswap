@@ -139,6 +139,12 @@ export interface FreeSwapConfig {
   providers: ProviderConfig[];
   /** Path to custom registry file */
   registryPath?: string;
+  /**
+   * Opt-in message compression (truncation, diff/JSON compaction).
+   * Disabled by default: silently rewriting payloads breaks long-context
+   * clients, so it must be an explicit choice.
+   */
+  tokenSaverEnabled?: boolean;
 }
 
 /** Health status of a provider */

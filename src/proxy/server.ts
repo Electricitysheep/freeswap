@@ -81,6 +81,8 @@ export async function createProxyServer(config: FreeSwapConfig, deps: ProxyServe
   const tokenSaver = new TokenSaver({ enableCavemanMode: !!config.masterKey });
 
   function compressMessages(messages: any[]): any[] {
+    // Rewriting payloads (truncation, diff compaction) is opt-in only.
+    if (!config.tokenSaverEnabled) return messages;
     const saved = tokenSaver.estimateSavings(messages);
     if (saved.savingsPercent > 0) {
       if (config.logLevel === 'debug') {
