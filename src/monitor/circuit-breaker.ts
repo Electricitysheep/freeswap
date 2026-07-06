@@ -67,7 +67,7 @@ export class CircuitBreaker {
       this.halfOpenRequests = Math.max(0, this.halfOpenRequests - 1);
       this.consecutiveSuccesses++;
 
-      if (this.consecutiveSuccesses > this.successThreshold) {
+      if (this.consecutiveSuccesses >= this.successThreshold) {
         this._state = 'closed';
         this.consecutiveFailures = 0;
         this.consecutiveSuccesses = 0;
